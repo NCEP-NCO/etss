@@ -1,0 +1,4 @@
+   - please retrieve large parm files from the following directory on WCOSS 2 and place in the corresponding etss.v2.4.1/parm directory: /lfs/h1/ops/prod/packages/etss.v.2.4.1/parm/
+     - parm/mergemask/mdl_etconus_etss2.1.bin
+     - parm/mergemask/mdl_etconus_etss2.1_625m.bin
+
