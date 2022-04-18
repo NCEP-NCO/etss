@@ -1,0 +1,105 @@
+Release Notes:  ETSS v2.2.0
+
+v0.0.0 - Initial implementation of Model -- Oct 3, 1995
+v0.0.0 - West Coast and Arctic added -- Sep 25, 2000
+v0.0.0 - Handle all 4 cycles of GFS --  Sep 1, 2001
+v0.0.0 - More development by Jye Chen until Aug, 16, 2002
+V0.0.0 - Changing model to handle 96 hours forecast -- May 10, 2007
+v0.0.0 - Output to NDFD grids -- Nov 7, 2007
+v0.0.0 - Updating east coast basin and adding Gulf of Alaska 
+         basin -- April 11, 2008
+v0.0.0 - Updating Gulf of Mexico basin -- Jun 30, 2010
+v0.0.0 - Adding scripts to run ETSS model in parallel -- Jan 21, 2011
+
+V1.0.0 - WCOSS Transition --- by Arthur Taylor, Oct 11, 2012
+         modified model to run on WCOSS
+v1.5.0 - Implemented on Oct.15, 2014
+         a) Using GRIB2 0.5 degree GFS data instead of GRIB1 1 degree GFS data
+         b) Bug fix for wind control window for Arctic basin
+         c) Additional output of 2.5 km CONUS grids (requiring a new mask file)
+         d) Additional output of 3 km Alaska grids (requiring a new mask file)
+         e) Correcting the Alaska mask files in the south Bering Sea
+v2.0.0 - Implemented on May 19, 2015
+         a) Re-introducing the inundation algorithm based on surge
+         b) For the East and Gulf of Mexico coastlines, nesting the tropical
+            and Extra-Tropical computational grids to leverage the finer 
+            overland details contained within tropical grids
+         c) ETSS post processing is being introduced to the operational
+            environment to create SHEF-encoded water level guidance for River
+            Forecast Centers
+         d) ETSS post processing now uses NCEP's BUFR tanks (as opposed to web
+            scraping) for observations
+v2.1.0 - Implemented on November 3, 2015
+         a) Creating a new Bering-Beaufort-Chukchi Sea (eBBC) Alaska basin to
+            Resolve a problem with water flowing from one basin to another 
+            through the Bering Strait.
+         b) Determine best wind drag coefficient to use for eBBC
+         c) Re-introducing the inundation algorithm based on surge and tide
+         d) Provide overland guidance based on surge and tide for all U.S
+            coastlines, which include tidal forcing for all domains
+         e) Correct the SHEF encoding to use MLLW instead of MHHW as a
+            vertical datum, and incorporate more stations
+v2.2.0 - Code handoff #1 on February 29, 2017
+       - Target Implementation date June 06, 2017
+         a) Create a single basin with overland information that covers 
+            Gulf of AK and West Coast
+         b) Create a new Tide version to resolve tide phase shift in CD2, ETP3 and AP3
+         c) Removed the reported storm surge 'wiggle' for the East Coast and  Gulf of 
+            Mexico in version 2.1
+         d) Experimentally generate max surge + tide above NAVD88 for 
+            0 ~ 102 hours
+         e) Extend forecast from 96 to 102 hours (to match P-Surge 2.6 (2016))
+         f) Migrate to Cray
+         g) Discontinue (a) 5.0 km CONUS and (b) 6.0 km AK grids as AWIPS 
+            (16.1.1; Dec 15, 2015) will no longer need
+         h) General Enhancements / Bug fixes (-check bounds IT test, improve
+            merge mask, make adjustments to the CSV files so they are 
+            self-describing and remove a bug in the linear interpolation for
+            the post-processing codes)
+           
+Input data changes: None
+
+Output changes:
+         Extend output from 96 to 102 hours for gridded and text products
+         Additional output of maximum Surge + Tide above NAVD88 for 0-102 hours
+             on CONUS grids (2.5km and 625m) and Alaska grids (3km) 
+         Add WMO headers to get gridded data into AWIPS 
+             (surge+tide on CONUS 2.5km/625m and Alaska 3km grids, 
+              TideOnly on CONUS 625m grid) 
+         Discontinue (a) 5.0 km CONUS and (b) 6.0 km AK grids                    
+
+Computational resource information:
+         Number of CPU: Increase to 14 CPU (No change)
+         Memory: Increase to 1600 MB / CPU (No change)
+         Serial/Parallel runs: 14 independent scripts run in parallel
+         Run Time: 28 minutes (from 37 minutes)
+         Disk space required: 
+             1.0 Gig for disseminated data
+             17.0G per cycle for working folder folder
+         How often: 4 cycle per day
+
+Dependencies: 
+         (a) GRIB2 library in /nwprod/lib, 
+         (b) /nwprod/util/exec/tocgrib2, 
+         (c) tocgrib2super
+
+Data retention for files in /com and /nwges under prod/para/test environments: 
+         A few weeks
+
+Preimplementation testing requirements:
+	 /dev/runETSS.sh, /dev/runPost_ETSS.sh and /dev/runETSS_gempak.sh 
+             should be tested as part of this implementation
+
+Does this change require a 30-day evaluation? Likely
+         The suggested evaluators: AK-HQ, AK-WFOs, MDL, OPC
+
+Include dissemination info
+	 Where should this output be sent? SBN
+	 Primary users: WFO and OPC
+	 Archive to HPSS
+	 Retention length: Few years
+	 List which output files should be archived: 
+         a) The GRIB files (etss.t${cyc}z*.grib2)
+         b) Station output files (mdlsurge.${cyc}* and etss.t${cyc}z*.txt)
+         c) Shef and CSV files (etss.t${cyc}z*.shef_tar and etss.t${cyc}z*.csv_tar)
+

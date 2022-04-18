@@ -1,0 +1,263 @@
+#===================================================================
+# ETSS Version 2.2 - Implementation Instructions
+#    Huiqing Liu 2016-04-04
+#===================================================================
+# Contents:
+#   1) Check out ETSS 2.2 from the repository
+#   2) (re)Build the executables
+#   3) Run a test
+#   4) Check model results
+#===================================================================
+
+
+#===================================================================
+#   1) Check out ETSS 2.2 from the repository
+#===================================================================
+% workDir=<your working directory>
+% cd $workDir
+% svn co https://vlab.ncep.noaa.gov/svn/etss/gfs_stormsurge/tags/ETSS2.2-spa/ etss2.2
+% cd etss2.2
+
+
+#===================================================================
+#   2) (re)Build the executables
+#===================================================================
+% cd sorc
+#  Load 'cray' module file to setup the environment.  'phaseTwo' is for 
+#  regression testing.
+% module load ./build_etss.module.cray
+#  Build the executables for the ETSS model
+% make -f makefile.etss.cray install
+#  Build the executables for the ETSS post processing codes for the ETSS
+% make -f makefile.post.cray install
+
+# If you get a conflict (e.g. Module 'ics/15.0.3' conflicts with the currently
+# loaded module(s) 'ics/12.0.1', you need to unload ics/12.0.1 first.
+#
+# % module unload ics/12.0.1
+
+#  Clean up afterwards.
+% make -f makefile.etss.cray clean
+% make -f makefile.post.cray clean
+% cd ../
+
+
+#===================================================================
+#   3) Run a test
+#===================================================================
+% cd dev
+
+#===================================================================
+# Step 1: Run the model.
+#===================================================================
+
+# Validate that runETSS.sh sets the env variable "LOWres" to YES or NO to
+#   indicate continuing (or not) creation of the coarse (5/6 km) grids.
+% grep LOWres ./runETSS.sh
+ 
+#===================================================================
+#    Kick off the model, replacing YYYYMMDD with date (e.g 20160329), 
+# and XX with cycle (00, 06, 12, 18).
+#
+#    Either option (see below) makes a /dev/tmp directory and then 
+# treats that as the root from a production perspective.
+# (e.g. /dev/tmp/com, /dev/tmp/pcom)
+#===================================================================
+
+# Option 1: Copy data from GFS area to a sandbox area (first run)
+% ./runETSS.sh YYYYMMDD XX copy
+
+# Option 2: Doesn't copy data from GFS areas (second and later runs)
+% ./runETSS.sh YYYYMMDD XX no-copy
+
+# Option 1:     Copies input data from /com to etss2.2/dev/tmp/com test area.
+# Both options: Runs etss2.2/dev/myEcf/jetss.ecf to run the model.
+
+# Patience! - The model takes 28 minutes to run.  
+
+#===================================================================
+# Step 2: Run the post processing.
+#===================================================================
+# Problem: The post processing requires the previous five days of runs 
+#    for all cycles.
+# Solution 1: Kick off ./runETSS.sh 20 times. (5 days * 4 cycles)
+# Solution 2: Look in Huiqing's area -
+#    Cray - /gpfs/hps/mdl/mdlsurge/noscrub/dev/liuh/ETSS2.2_prod/dev/tmp/com/etss/prod (Cray) 
+#    PhaseTwo - /mdlsurge/noscrub/dev/liuh/ETSS2.2_prod/dev/tmp/com/etss/prod
+#===================================================================
+
+# Run the Post processing {XX is cycle (00, 06, 12, 18)}
+% ./runPost_ETSS.sh XX
+
+#  This does the following:
+#     1a. Copies ETSS text product from ETSS2.2 output for today's XX cycle run
+#         and previous 5 days run (4 cycles) 
+#     1b. Copies COOPS water level obs (BUFR) from /dcom for today
+#         and previous 5 days
+#     To -- etss2.2/dev/tmp/tmpnwprd1/${job}.${pid} ${DATA} dir
+#     2. Parses BUFR data and ETSS data.
+#     3. Calculates station tide predictions
+#     4. Calculates anomally (when obs available) based on 5 day average error
+#     5. Outputs results onto CSV files and SHEF files in /com and /pcom
+
+#===================================================================
+# Step 3: Generate the gempak files
+#===================================================================
+
+% ./runETSS_gempak.sh YYYYMMDD XX ZZ
+
+#  Where:  YYYYMMDD is date (e.g 20140520), 
+#          XX is cycle (00, 06, 12, 18)         
+#          ZZ is NDFD domain (con, ala)
+
+
+#===================================================================
+#   4) Check results
+#===================================================================
+#  ETSS2.2 model outputs the following products:
+#     1. NDFD Grid products in GRIB2 format
+#     2. Station output products in ASCII format
+#  which are saved in /com and /pcom folders
+
+#   ETSS2.2 post-processing outputs the following products:
+#     1. SHEF bulletins in ASCII format
+#     2. CSV files in ASCII format
+#  which are saved in /com and /pcom folder
+
+#   gempak scripts produce:
+#     1. 2.5km/3km CONUS/Alaska surge only and surge + tide grids
+#     2. Several zoomed in regions for surge only and surge + tide grids
+#  which are saved in /com/nawips folder
+#===================================================================
+
+# Step 1: check the GRIB2 results in the /com folder.
+% ls tmp/com/etss/prod/etss.YYYYMMDD/*.grib2
+
+#===================================================================
+# There should be 6 GRIB2 files with different resolutions for:
+# surge only, tideOnly and surge plus tide.  
+#     etss.t${cyc}z.stormsurge.con2p5km.grib2
+#     etss.t${cyc}z.stormtide.con2p5km.grib2
+#     etss.t${cyc}z.stormtide.con625m.grib2
+#     etss.t${cyc}z.tide.con625m.grib2
+#     etss.t${cyc}z.stormsurge.ala3km.grib2
+#     etss.t${cyc}z.stormtide.ala3km.grib2
+# Additionally, there are 3 maximum (surge plus tide) over 0-102 hours.
+#     etss.max.t${cyc}z.stormtide.con2p5km.grib2
+#     etss.max.t${cyc}z.stormtide.con625m.grib2
+#     etss.max.t${cyc}z.stormtide.ala3km.grib2
+#===================================================================
+
+#===================================================================
+# If the low resolution grids are not discontinued, then there are also:
+#     etss.t${cyc}z.stormsurge.con5km.grib2
+#     etss.t${cyc}z.stormsurge.ala6km.grib2
+#===================================================================
+
+# Step 2: check the newer model specific text files for surge only and surge 
+#    plus tide results
+% ls tmp/com/etss/prod/etss.YYYYMMDD/*.txt
+
+#===================================================================
+# There should be 10 station text files in new format for surge only and 
+# surge plus tide:
+#    etss.t${cyc}z.stormsurge.${area}.txt (area = wst, goa, ber, est and gom)
+#    etss.t${cyc}z.stormtide.${area}.txt  (area = wst, goa, ber, est and gom)
+#===================================================================
+
+# Step 3: check the older model specific text files for surge only
+% ls tmp/com/etss/prod/etss.YYYYMMDD/mdlsurge.*
+
+#===================================================================
+# There should be 6 station text files in old format for surge only:
+#     mdlsurge.${cyc}${bsn} (bsn = z, a, k, w, e, g)
+#===================================================================
+
+# Step 4: check the SHEF bulletins
+% ls tmp/com/etss/prod/etss.YYYYMMDD/shef*
+
+#===================================================================
+# There should be 5 SHEF bulletins (one for each area)
+#    shef.etss.t${cyc}z.totalwter.${area} (area = wst, goa, ber, est, and gom)
+#===================================================================
+
+# Step 5: check the CSV files (look for tar files).
+% ls tmp/com/etss/prod/etss.YYYYMMDD/*csv_tar
+
+#===================================================================
+# There should be 1 csv_tar per cycle
+#===================================================================
+
+
+
+# Step 6: Compare the results to Huiqing's runs 
+#===================================================================
+#    tree1=/gpfs/hps/ptmp/mdl.surge/ETSS_cron_output/tmp/com/etss/prod/etss.YYYYMMDD (Cray) 
+#    tree2=/com/etss/prod/etss.YYYYMMDD (Your /com folder)
+#===================================================================
+% diff -rq ${tree1} ${tree2} 
+
+
+
+#===================================================================
+# There should be no differences if everything is correct
+#===================================================================
+
+# Step 7: check the /pcom folder
+% ls tmp/pcom/etss/grib2*
+
+#===================================================================
+# There should be 8 grib2 files in different resolution:
+#    grib2.etss.t${cyc}z.stormsurge.ala3km.etss_${cyc}
+#    grib2.etss.t${cyc}z.stormsurge.ala6km.etss_${cyc}
+#    grib2.etss.t${cyc}z.stormsurge.con2p5km.etss_${cyc}
+#    grib2.etss.t${cyc}z.stormsurge.con5km.etss_${cyc}
+#    grib2.etss.t${cyc}z.stormtide.ala3km.etss_${cyc}
+#    grib2.etss.t${cyc}z.stormtide.con2p5km.etss_${cyc}
+#    grib2.etss.t${cyc}z.stormtide.con625m.etss_${cyc}
+#    grib2.etss.t${cyc}z.tide.con625m.etss_${cyc}
+#===================================================================
+
+# Step 8: check the /pcom folder
+% ls tmp/pcom/etss/txt*
+
+#===================================================================
+# There should be 6 station text files in old format for surge only:
+#    txt.etss.t${cyc}z.fqac23_stormsurge.arctic
+#    txt.etss.t${cyc}z.fqak23_stormsurge.bering
+#    txt.etss.t${cyc}z.fqga23_stormsurge.gulfAK
+#    txt.etss.t${cyc}z.fqpz23_stormsurge.west
+#    txt.etss.t${cyc}z.fqgx23_stormsurge.gulfMX
+#    txt.etss.t${cyc}z.fqus23_stormsurge.east
+#===================================================================
+
+# Step 9: check the /pcom folder
+% ls tmp/pcom/etss/shef*
+
+#===================================================================
+# There should be 6 station text files in old format for surge only:
+#    shef.etss.t${cyc}z.totalwater.arctic
+#    shef.etss.t${cyc}z.totalwater.bering
+#    shef.etss.t${cyc}z.totalwater.gulfAK
+#    shef.etss.t${cyc}z.totalwater.west
+#    shef.etss.t${cyc}z.totalwater.gulfMX
+#    shef.etss.t${cyc}z.totalwater.east
+#===================================================================
+
+# Step 10: Check the /com/nawips folder for GEMPAK
+% ls tmp/com/nawips/prod/YYYYMMDD
+
+#===================================================================
+# Gempak files are under /com/nawips/prod/YYYYMMDD
+#    surge_2p5km_con_${YYYYMMDD}
+#    surge_tide_2p5km_con_${YYYYMMDD}
+#    surge_2p5km_con_${region}_${YYYYMMDD}
+#    surge_tide_2p5km_con_${region}_${YYYYMMDD}
+# Where: region = nwcoast, swcoast, necoast, secoast, gulf
+
+#    surge_3km_ala_${YYYYMMDD}
+#    surge_tide_3km_ala_${YYYYMMDD}
+#    surge_3km_ala_${region}_${YYYYMMDD}
+#    surge_tide_3km_ala_${region}_${YYYYMMDD}
+# Where: region = arctic, bering, wgulf, egulf
+#===================================================================

@@ -1,0 +1,58 @@
+#!/bin/bash
+
+######################################################################
+# The ECF options
+######################################################################
+#. ${HOMEetss:?}/dev/myEcf/etss.ver
+. ${HOMEetss:?}/versions/run.ver
+
+if [[ ${jump} == "N" ]] ; then
+qsub << EOF 
+  #PBS -N ETSS_DRAWIMAGES.${pid}
+  #PBS -j oe
+  #PBS -l walltime=1:10:00
+  #PBS -q ${QUEUE:?}
+  #PBS -A ETSS-DEV
+  #PBS -l select=1:ncpus=14:mem=15gb
+  #PBS -l debug=true
+  #PBS -V
+  #PBS -W umask=022
+  #PBS -W depend=afterok:${etss_merg_id}
+
+  module purge
+  module load envvar/$envvar_ver
+  module load PrgEnv-intel/${PrgEnv_intel_ver}
+  module load intel/${intel_ver}
+  module load craype/${craype_ver}
+  module load cray-mpich/${cray_mpich_ver}
+  module load prod_util/${prod_util_ver}
+  module load cray-pals/${cray_pals_ver}
+  module load imagemagick/${imagemagick_ver}
+  module load cfp/${cfp_ver}
+  ${HOMEetss}/jobs/JETSS_DRAWIMAGES
+EOF
+else
+qsub << EOF 
+  #PBS -N ETSS_DRAWIMAGES.${pid}
+  #PBS -j oe
+  #PBS -l walltime=1:10:00
+  #PBS -q ${QUEUE:?}
+  #PBS -A ETSS-DEV
+  #PBS -l select=1:ncpus=14:mem=15gb
+  #PBS -l debug=true
+  #PBS -V
+  #PBS -W umask=022
+
+  module purge
+  module load envvar/$envvar_ver
+  module load PrgEnv-intel/${PrgEnv_intel_ver}
+  module load intel/${intel_ver}
+  module load craype/${craype_ver}
+  module load cray-mpich/${cray_mpich_ver}
+  module load prod_util/${prod_util_ver}
+  module load cray-pals/${cray_pals_ver}
+  module load imagemagick/${imagemagic_ver}
+  module load cfp/${cfp_ver}
+  ${HOMEetss}/jobs/JETSS_DRAWIMAGES
+EOF
+fi

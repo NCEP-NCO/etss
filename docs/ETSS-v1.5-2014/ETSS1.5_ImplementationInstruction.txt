@@ -1,0 +1,31 @@
+1.	Check out ETSS1.5 from the repository:
+	cd to your working directory
+	svn co https://collaborate3.nws.noaa.gov/svn/etss/gfs_stormsurge/trunk/ etss1.5
+2.	Build and Install the ETSS1.5 codes
+	$ cd etss1.5/sorc
+	$ make install
+3.	Run the model
+	$ cd ../
+	$ ./runETSS.sh YYYYMMDD XX
+where:	YYYYMMDD is date (e.g 20140520),
+        XX is cycle (00, 06, 12, 18)
+This does the following:
+1.	Copies input data from /com to the etss1.5/work/com test directory structure.
+2.	Copies production’s current answers from /pcom and /com to etss1.5/work/pcom and /com for comparsion.
+3.	Runs etss1.5/myEcf/jgfs_stormsurge.ecf to run the model.
+	Example: run the model for May 20, 2014 00Z cycle:
+	$ ./runETSS.sh 20140520 00
+	(Caution:You need make sure the GFS wind output data is available before you run the ETSS model. MDL found that the GFS output is delayed by between 4 to 5 hours, so we assume a 4 hours 50 minutes delay)
+4.	Compare the following to validate the ETSS 1.5 model runs...
+	The ETSS1.5 model low resolution output grids (5 km CONUS and 6 km for AK) results are saved in GRIB2 format here for direct comparison with the ETSS1.0 model results:
+	etss1.5/work/pcom/gfs/grib2.mdlsurgegrid.${cyc}${area}.gfs_stormsurge_${cyc}
+	The operational ETSS1.0 model results are here:
+	etss1.5/work/pcom/ans/grib2.mdlsurgegrid.${cyc}${area}.gfs_stormsurge_${cyc}
+	The ETSS1.5 model high resolution output grids (2.5 km CONUS and 3 km for AK) results are also saved in GRIB2 format in the same folder as the low resolution output:
+	etss1.5/work/pcom/gfs/grib2.mdlsurgegrid.2.5km.${cyc}con.gfs_stormsurge_${cyc}
+	etss1.5/work/pcom/gfs/grib2.mdlsurgegrid.3km.${cyc}ala.gfs_stormsurge_${cyc}
+5.	Within the working folder (etss1.5/work/tmp/gfs_stormsurge_${cyc}.{jobid}) these files are:
+	grib2.mdlsurgegrid.${cyc}${area}
+	grib2.mdlsurgegrid.2.5km.${cyc}con
+	grib2.mdlsurgegrid.3km.${cyc}ala
+

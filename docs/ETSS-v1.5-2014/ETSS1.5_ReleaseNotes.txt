@@ -1,0 +1,45 @@
+Release Notes:  ETSS v1.5.0
+
+v0.0.0 - Initial implementation of Model -- Oct 3, 1995
+v0.0.0 - West Coast and Arctic added -- Sep 25, 2000
+v0.0.0 - Handle all 4 cycles of GFS --  Sep 1, 2001
+v0.0.0 - More development by Jye Chen until Aug, 16, 2002
+V0.0.0 - Changing model to handle 96 hours forecast -- May 10, 2007
+v0.0.0 - Output to NDFD grids -- Nov 7, 2007
+v0.0.0 - Updating east coast basin and adding Gulf of Alaska basin -- April 11, 2008
+v0.0.0 - Updating Gulf of Mexico basin -- Jun 30, 2010
+v0.0.0 - Adding scripts to run ETSS model in parallel -- Jan 21, 2011
+
+V1.0.0 - WCOSS Transition --- by Arthur Taylor, Oct 11, 2012
+         modified model to run on WCOSS
+v1.5.0 - by Huiqing Liu, May 18, 2014
+	Input data changes
+	Using GRIB2 GFS data instead of GRIB1
+	0.5 degree GFS data instead of 1 degree
+	bug fix for wind control window for Arctic basin
+	GRIB2 library instead of using GRIB1 library located in /nwprod/lib
+	Interpolate higher resolution (0.5 degree) GFS data to ETSS grid
+	Output changes
+	Additional output of 2.5 km CONUS grids (requiring a new mask file)
+	Additional output of 3 km Alaska grids (requiring a new mask file)
+	Correcting the Alaska mask files in the south Bering Sea
+	Computational resource information:
+	Number of CPU: <No Change> (2 CPU)
+	Memory: Increase to 200 MB / CPU (from 100 MB)
+	Serial/Parallel runs: 2 independent scripts run in parallel
+	Run Time: 4-6 minutes
+	Disk space required: 1.0 Gig for disseminated data (5.0G per cycle for working folder folder (ETSS1.5/work/tmp/)
+	How often: 4 cycle per day
+	Dependencies: (a) GRIB2 library in /nwprod/lib, (b) /nwprod/util/exec/tocgrib2
+	Data retention for files in /com and /nwges under prod/para/test environments: A few weeks.
+	Preimplementation testing requirements
+	runETSS.sh should be tested as part of this implementation
+	Does this change require a 30-day evaluation?  Unlikely
+	The suggested evaluators: MDL, OPC, NHC, WFOs
+	Include dissemination info
+	Where should this output be sent? SBN
+	Primary users: WFO and OPC
+	Archive to HPSS
+	Retention length: Few years
+	List which output files should be archived: The GRIB files (grib2.mdlsurgegrid*)
+

@@ -1,0 +1,93 @@
+#!/bin/bash
+
+########################################
+# Runs GFS MDL Extratropical Storm Surge Model
+########################################
+
+set -x
+date
+export PS4=' $SECONDS + '
+
+#####################################
+# SET SHELL PROCESSING VARIABLES
+#####################################
+
+export pid=$$
+#export DATA=${DATA:-${DATAROOT:?}/etss_${PDY}_${cyc}}
+export DATA=${DATA:-${DATAROOT:?}/etss_${cyc}}
+rm -rf $DATA
+mkdir $DATA
+mkdir $DATA/out
+cd $DATA
+
+export LOCALJLOG="YES"
+export jlogfile="${DATA}/jlogfile.${jobid:?}"
+
+export pgmout="OUTPUT.${pid}"
+export cycle=${cycle:-t${cyc}z}
+
+export RUN_ENVIR=${RUN_ENVIR:-nco}
+
+export NETgfs=${NETgfs:-gfs}
+export NET=${NET:-etss}
+export RUN=${RUN:-etss}
+
+###########################################
+# SET which system to run model
+##########################################
+
+###################################
+# Set up the UTILITIES
+###################################
+
+export EXECetss=$HOMEetss/exec
+export PARMetss=$HOMEetss/parm
+export FIXetss=$HOMEetss/fix
+export USHetss=$HOMEetss/ush
+export SCRIetss=$HOMEetss/scripts
+export FIXshared=$HOMEetss/util/fix
+export USHutil=$HOMEetss/util/ush
+export USHshared=$HOMEetss/util/ush
+
+# Run setup to initialize working directory and utility scripts
+setpdy.sh
+. ./PDY
+
+##############################
+# Define COM Directories
+##############################
+export COMINSS=${COMINSS:-$(compath.py ${NET}/${etss_ver})}
+export COMINgfs=${COMINgfs:-$(compath.py ${NETgfs}/${gfs_ver}/${NETgfs}.$PDY)}
+export COMINgfsm1=${COMINgfsm1:-$(compath.py ${NETgfs}/${gfs_ver}/${NETgfs}.$PDYm1)}
+export COMINgfsm2=${COMINgfsm2:-$(compath.py ${NETgfs}/${gfs_ver}/${NETgfs}.$PDYm2)}
+export COMINgfsm3=${COMINgfsm3:-$(compath.py ${NETgfs}/${gfs_ver}/${NETgfs}.$PDYm3)}
+#export COMOUT=${COMOUT:-${COMROOT:?}/${NET}/${envir}/${RUN}.${PDY}}
+export COMOUT=${COMOUT:-$(compath.py -o ${NET}/${etss_ver}/${RUN}.${PDY})}
+export COMOUTwmo=${COMOUTwmo:-${COMOUT:?}/wmo}
+
+mkdir -p $COMOUT $COMOUTwmo
+
+env
+########################################################
+# Execute the script.
+${HOMEetss}/scripts/exetss_prewnd.sh
+export err=$?; err_chk
+########################################################
+
+msg="JOB $job HAS COMPLETED NORMALLY."
+postmsg $jlogfile "$msg"
+
+if [[ "${LOCALJLOG}" == "YES" ]]; then
+  if [[ ! -r "${jlogfile}" ]]; then
+    echo "Cannot read jlogfile (${jlogfile})"
+  elif [[ ! -s "${jlogfile}" ]]; then
+    echo "Jlogfile (${jlogfile}) is 0 bytes."
+  else
+    cp "${jlogfile}" "${COMOUT}"
+  fi
+fi
+
+cat $pgmout
+
+date
+

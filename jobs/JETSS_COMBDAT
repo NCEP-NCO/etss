@@ -1,0 +1,77 @@
+#!/bin/sh
+
+########################################
+# Runs GFS MDL Extratropical Storm Surge Model
+########################################
+
+set -x
+date
+export PS4=' $SECONDS + '
+
+#####################################
+# SET SHELL PROCESSING VARIABLES
+#####################################
+
+export pid=$$
+export DATA=${DATA:-${DATAROOT:?}/${jobid:?}}
+mkdir $DATA
+cd $DATA
+
+export LOCALJLOG="YES"
+export jlogfile="${DATA}/jlogfile.${jobid:?}"
+
+export pgmout="OUTPUT.${pid}"
+export cycle=${cycle:-t${cyc}z}
+
+export RUN_ENVIR=${RUN_ENVIR:-nco}
+export NET=${NET:-etss}
+export RUN=${RUN:-etss}
+
+export EXECetss=$HOMEetss/exec
+export SCRIPTSetss=$HOMEetss/scripts
+export USHetss=$HOMEetss/ush
+export LOGSetss=$HOMEetss/logs
+export FIXshared=$HOMEetss/util/fix
+export USHutil=$HOMEetss/util/ush
+export USHshared=$HOMEetss/util/ush
+
+# Run setup to initialize working directory and utility scripts
+setpdy.sh
+. ./PDY
+
+export COMIN=${COMIN:-$(compath.py ${NET}/${etss_ver}/${RUN}.${PDY})}
+export COMOUT=${COMOUT:-$(compath.py -o ${NET}/${etss_ver}/${RUN}.${PDY})}
+
+#export COMIN=${COMIN:-${COMROOT:?}/${NET}/${envir}/${RUN}.${PDY}}
+#export COMOUT=${COMOUT:-${COMROOT:?}/${NET}/${envir}/${RUN}.${PDY}}
+export COMOUTwmo=${COMOUTwmo:-${COMOUT:?}/wmo}
+
+mkdir -p $COMOUT $COMOUTwmo
+env
+
+# Call script
+$SCRIPTSetss/exetss_combdat.sh
+export err=$?; err_chk
+
+if [[ "${LOCALJLOG}" == "YES" ]]; then
+  if [[ ! -r "${jlogfile}" ]]; then
+    echo "Cannot read jlogfile (${jlogfile})"
+  elif [[ ! -s "${jlogfile}" ]]; then
+    echo "Jlogfile (${jlogfile}) is 0 bytes."
+  else
+    cp "${jlogfile}" "${COMOUT}"
+  fi
+fi
+
+# Delete data dir
+if [ "$KEEPDATA" != "YES" ]; then
+  cd ${DATAROOT:?}
+  rm -rf ${DATA}
+#  cd $COMOUT
+#  rm -f fns_obs.txt fns_ss.txt 
+#  rm -f *.ss *.shef13 *Grid 
+#  rm -f HSBY datelist
+fi
+
+date
+

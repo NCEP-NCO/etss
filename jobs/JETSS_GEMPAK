@@ -1,0 +1,57 @@
+#!/bin/sh
+########################################
+# Generate ETSS Gempak file
+########################################
+
+date
+export PS4=' $SECONDS + ' 
+set -xa
+
+export pid=$$
+export DATA=${DATA:-${DATAROOT:?}/${jobid:?}}
+mkdir $DATA
+cd $DATA
+
+export LOCALJLOG="YES"
+export jlogfile="${DATA}/jlogfile.${jobid:?}"
+
+export pgmout="OUTPUT.${pid}"
+export cycle=${cycle:-t${cyc}z}
+export USHutil=${UTILROOT:?}/ush
+# Run setpdy and initialize PDY variables
+setpdy.sh
+. ./PDY
+
+export SCRIetss=$HOMEetss/scripts
+export NET=${NET:-etss}
+export RUN=${RUN:-etss}
+export COMIN=${COMIN:-$(compath.py ${NET}/${etss_ver}/${RUN}.${PDY})}
+#export COMIN=${COMIN:-${COMROOT:?}/${NET}/${envir}/${RUN}.${PDY}}
+
+export COMOUT=${COMOUT:-$(compath.py -o ${NET}/${etss_ver}/${RUN}.${PDY})/gempak}
+mkdir -p -m 775 $COMOUT
+export DBN_ALERT_TYPE=${DBN_ALERT_TYPE:-ETSS_GEMPAK}
+
+env
+########################################################
+# Execute the script.
+${SCRIetss}/exetss_gempak.sh
+export err=$?; err_chk
+########################################################
+
+if [[ "${LOCALJLOG}" == "YES" ]]; then
+  if [[ ! -r "${jlogfile}" ]]; then
+    echo "Cannot read jlogfile (${jlogfile})"
+  elif [[ ! -s "${jlogfile}" ]]; then
+    echo "Jlogfile (${jlogfile}) is 0 bytes."
+  else
+    cp "${jlogfile}" "${COMOUT}"
+  fi
+fi
+
+if [ "${KEEPDATA}" != "YES" ]; then
+  cd $DATAROOT
+  rm -rf $DATA
+fi
+
+date

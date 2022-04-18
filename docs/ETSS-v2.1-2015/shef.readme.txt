@@ -1,0 +1,61 @@
+Check the SHEF manual for details about how SHEF format works
+
+Our SHEF files (there are 5 of them) are split up by basin, with each file
+containing individual SHEF messages (one message for each location) for that
+basin. We have three data types:
+
+HMIFW: Surge-only
+HMIFX: Surge + Tide
+HMIFV: Surge + Tide + Anomaly
+
+The file sorc/combAll.fd/makeSHEF.f controls what goes in the SHEF messages.
+sorc/combAll.fd/combineAll.f sets up WMO headers and AWIPS IDs for SHEF messages.
+
+Our WMO Headers are:
+SRUS70 KWNO - Conus
+SRAK70 KWNO - Alaska
+
+Our AWIPS IDs are:
+TIDTWE - East Coast
+TIDTWG - Gulf of Mexico
+TIDTWP - West Coast
+TIDTWC - Gulf of Alaska
+TIDTWB - Bering and Arctic Sea Alaska
+
+Example Header
+SRAK70 KWNO TIDTWA 251200
+
+"SRAK70 KWNO" - WMO Header
+"TIDTWA" - AWIPS ID
+"251200" - DDHHMM of forecast
+
+Example SHEF:
+.E RDDA2 20150625 Z DC201506251637/DH1200/HMIFV/DIH01 
+.E1     0.416/   1.087/   1.110/   1.507/   1.419/   1.259/   1.158/   1.018/   0.865/   0.725/   0.618/   0.456
+.E2     0.256/   0.330/   0.423/   0.505/   0.553/   0.564/   0.538/   0.484/   0.416/   0.360/   0.332/   0.334
+.E3     0.366/   0.427/   0.508/   0.586/   0.640/   0.661/   0.644/   0.586/   0.494/   0.390/   0.303/   0.249
+.E4     0.238/   0.272/   0.343/   0.429/   0.505/   0.453/   0.469/   0.454/   0.410/   0.251/   0.199/   0.170
+.E5     0.169/   0.196/   0.252/   0.327/   0.400/   0.452/   0.471/   0.453/   0.391/   0.295/   0.189/   0.104
+.E6     0.053/   0.044/   0.079/   0.152/   0.238/   0.315/   0.368/   0.392/   0.384/   0.342/   0.282/   0.227
+.E7     0.192/   0.184/   0.207/   0.264/   0.343/   0.520/   0.575/   0.595/   0.671/   0.601/   0.496/   0.485
+.E8     0.399/   0.449/   0.444/   0.586/   0.765/   0.958/   1.041/   1.199/   1.226/   1.215/   1.168/   1.100
+
+"E" stands for time series data
+
+"RDDA2" is the National Weather Service Location Identifier (NWSLI) which gives the 
+station location for this SHEF message. Stations MUST have these to be included in
+the SHEF output
+
+"20150625" is the forecast date
+
+"Z" indicates UTC time
+
+"DC201506251637" is the creation time of the actual message
+
+"DH1200" means forecast time starting at 12Z
+
+"HMIFV" is the data type (surge+tide+anom in this case)
+
+"DIH01" means data are given in increments of one hour from the forecast time
+
+Any "M" indicates missing data

@@ -1,0 +1,35 @@
+#PBS -N etss_drawimages_%CYC%
+#PBS -j oe
+#PBS -A %PROJ%-%PROJENVIR%
+#PBS -q %QUEUE%
+#PBS -l walltime=00:30:00
+#PBS -l place=shared,select=1:ncpus=14:mpiprocs=14:ompthreads=1:mem=15GB
+#PBS -l debug=true
+
+model=etss
+%include <head.h>
+%include <envir-p1.h>
+
+export cyc=%CYC%
+
+module load intel/${intel_ver}
+module load craype/${craype_ver}
+module load cray-mpich/${cray_mpich_ver}
+module load cray-pals/${cray_pals_ver}
+module load imagemagick/${imagemagic_ver}
+module load cfp/${cfp_ver}
+
+# CALL executable job script here
+${HOMEetss}/jobs/JETSS_DRAWIMAGES
+
+if [ $? -ne 0 ]; then
+  ecflow_client --abort="ERROR running J-job"
+  exit
+fi
+
+%include <tail.h>
+%manual
+#######################################################################
+# Purpose: To execute the job that runs the ETSS model on WCOSS
+#######################################################################
+%end
