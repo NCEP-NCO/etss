@@ -3,7 +3,7 @@
 #PBS -q %QUEUE%
 #PBS -l walltime=00:10:00
 #PBS -A %PROJ%-%PROJENVIR%
-#PBS -l place=shared,select=1:ncpus=1:mem=200mb
+#PBS -l place=shared,select=1:ncpus=1:mem=2000mb
 #PBS -l debug=true
 
 model=etss
